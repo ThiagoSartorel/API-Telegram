@@ -16,6 +16,13 @@ app.use(bodyParser.json());
 
 // Define a route that listens for POST requests
 app.post("/send-message", async (req, res) => {
+
+  if (req.header("key") != process.env.KEY) {
+    return res.status(500).json({
+      success: false,
+      message: "Invalid API access KEY",
+    });
+  }
   try {
     const { message } = req.body;
 
