@@ -39,6 +39,13 @@ app.post("/send-message", async (req, res) => {
   }
 });
 
+//our command
+//bot.on(["/start", "/hello"], (msg) => {
+//all the information about user will come with the msg
+//    console.log(msg);
+//    bot.sendMessage(process.env.GROUP_ID, `Hello ${msg.from.first_name}`);
+//});
+
 // Start polling
 bot.start();
 
