@@ -47,5 +47,8 @@ Enviar mensagem:
 <pre><strong>POST </strong><span>/send-message</span></pre>
 **Lembre-se** de sempre colocar sua chave no cabeçalho da requisição.
 
+**REFERÊNCIA**
+https://core.telegram.org/bots/api
+
 ##
 Created by **Thiago Sartorel** on **11/09/2023**.
