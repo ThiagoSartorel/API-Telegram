@@ -1,6 +1,7 @@
 const TeleBot = require("telebot");
 const express = require("express");
 const bodyParser = require("body-parser");
+const axios = require("axios");
 require("dotenv").config();
 
 // Instantiate Telebot with your Telegram token
@@ -34,7 +35,7 @@ app.post("/send-message", async (req, res) => {
     }
 
     // Send a message to the specified chat ID
-    await bot.sendMessage(process.env.GROUP_ID, message);
+    await bot.sendMessage(process.env.GROUP_ID, message, { parse_mode: 'MarkdownV2' });
 
     // Respond to the HTTP request
     res
@@ -47,11 +48,70 @@ app.post("/send-message", async (req, res) => {
 });
 
 //our command
-//bot.on(["/start", "/hello"], (msg) => {
-//all the information about user will come with the msg
-//    console.log(msg);
-//    bot.sendMessage(process.env.GROUP_ID, `Hello ${msg.from.first_name}`);
-//});
+bot.on(["/status"], (msg) => {
+  const url = process.env.ZABBIX_URL;
+  const user = process.env.ZABBIX_USER;
+  const password = process.env.ZABBIX_PASSWORD;
+  const body = {
+    jsonrpc: "2.0",
+    method: "user.login",
+    params: {
+      user: user,
+      password: password,
+    },
+    id: 1,
+  };
+  
+  // ? Realizando a requisicao
+  axios.post(url, body).then((response) => {
+    const hostid = process.env.HOSTIDS;
+    const body = {
+      jsonrpc: "2.0",
+      method: "item.get",
+      params: {
+        output: ["name", "lastvalue", "key_"],
+        hostids: hostid,
+        search: {
+          key_: [
+            "upsAdvInputVoltage",
+            "upsAdvOutputVoltage",
+            "upsAdvBatteryCapacity",
+            "upsBasicBatteryTimeOnBattery",
+            "upsBasicBatteryStatus",
+          ],
+        },
+        sortfield: "name",
+        searchByAny: true,
+      },
+      auth: response.data.result,
+      id: 1,
+    };
+    // ? Realizando a requisicao
+    axios.post(url, body).then((response) => {
+      //console.log(response.data.result);
+      const message =
+        "Bateria: " +
+        response.data.result[0].lastvalue +
+        "%\n" +
+        "Status: " +
+        ((response.data.result[1].lastvalue == "2")
+          ? "OK\n"
+          : "Anomalia\n") +
+            "Input: " +
+            response.data.result[2].lastvalue +
+            "v\n" +
+            "Output: " +
+            response.data.result[3].lastvalue +
+            "v\n" +
+            "TempoNaBateria: " +
+            response.data.result[4].lastvalue +
+            "s\n";
+
+      bot.sendMessage(process.env.GROUP_ID, `${message}`);
+    });
+  });
+  //all the information about user will come with the msg
+});
 
 // Start polling
 bot.start();
