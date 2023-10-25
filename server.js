@@ -117,7 +117,7 @@ bot.on(["/status"], (msg) => {
 bot.on(["/laststatus"], (msg) => {
   console.log("Mensagem de /laststatus recebida!");
 
-  const url = "https://apidev.uniplaclages.edu.br:40011/last"
+  const url = process.env.NOBREAK_API_URL
 
   // ? Realizando a requisicao
   axios.get(url).then((response) => {
