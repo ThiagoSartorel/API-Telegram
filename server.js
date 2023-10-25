@@ -2,7 +2,12 @@ const TeleBot = require("telebot");
 const express = require("express");
 const bodyParser = require("body-parser");
 const axios = require("axios");
+const https = require('https');
 require("dotenv").config();
+
+const agent = new https.Agent({  
+  rejectUnauthorized: false
+});
 
 // Instantiate Telebot with your Telegram token
 const bot = new TeleBot({
@@ -98,6 +103,7 @@ bot.on(["/status"], (msg) => {
           "Output: " + response.data.result[3].lastvalue + "v\n" +
           "TempoNaBateria: " + response.data.result[4].lastvalue + "s\n";
 
+        console.log("Enviando mensagem!");
         bot.sendMessage(process.env.GROUP_ID, `${message}`);
         console.log("Mensagem enviada!");
       })
@@ -117,29 +123,32 @@ bot.on(["/status"], (msg) => {
 bot.on(["/laststatus"], (msg) => {
   console.log("Mensagem de /laststatus recebida!");
 
-  const url = process.env.NOBREAK_API_URL
+  const url = process.env.NOBREAK_API_URL;
+  console.log(process.env.NOBREAK_API_URL);
 
-  // ? Realizando a requisicao
-  axios.get(url).then((response) => {
-    console.log("Dados coletados!");
-    const date = new Date(response.data.created_at)
+  // Realizando a requisição
+  axios.get(url, { httpsAgent: agent })
+    .then((response) => {
+      console.log("Dados coletados!");
+      const date = new Date(response.data.created_at);
+      date.setHours(date.getHours() - 3)
+      const message = "Bateria: " + response.data.battery + "%\n" +
+        "Status: " + ((response.data.battery_status == "2") ? "OK\n" : "Anomalia\n") +
+        "Input: " + response.data.input_voltage + "v\n" +
+        "Output: " + response.data.output_voltage + "v\n" +
+        "TempoNaBateria: " + response.data.time_on_battery + "s\n" +
+        "HoraColeta: " + date.toLocaleString('pt-BR', { timeZone: 'UTC' });
 
-    const message = "Bateria: " + response.data.result[0].lastvalue + "%\n" +
-    "Status: " + ((response.data.lastvalue == "2") ? "OK\n" : "Anomalia\n") +
-    "Input: " + response.data.lastvalue + "v\n" +
-    "Output: " + response.data.lastvalue + "v\n" +
-    "TempoNaBateria: " + response.data.lastvalue + "s\n"+
-    "HoraColeta: " + date.toLocaleString('pt-BR', { timeZone: 'UTC' });
-
-    console.log("Enviando mensagem!");
-    bot.sendMessage(process.env.GROUP_ID, `${message}`);
-    
-  }).catch((error) => {
-    // Tratar erros aqui
-    bot.sendMessage(process.env.GROUP_ID, `NÃ£o foi possives e comunicar com a API-NOBREAK, tente novamente mais tade!`);
-    console.error("Ocorreu um erro na requisiÃ§Ã£o:", error);
-  });;
-  //all the information about user will come with the msg
+      console.log("Enviando mensagem!");
+      bot.sendMessage(process.env.GROUP_ID, `${message}`);
+      console.log("Mensagem enviada!");
+    })
+    .catch((error) => {
+      // Tratar erros aqui
+      bot.sendMessage(process.env.GROUP_ID, "Não foi possível se comunicar com a API-NOBREAK, tente novamente mais tarde!");
+      console.error("Ocorreu um erro na requisição:", error);
+    });
+  // Todas as informações sobre o usuário virão com o msg
 });
 
 // Start polling
