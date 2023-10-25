@@ -49,6 +49,7 @@ app.post("/send-message", async (req, res) => {
 
 //our command
 bot.on(["/status"], (msg) => {
+  console.log("Mensagem de /status recebida!");
   const url = process.env.ZABBIX_URL;
   const user = process.env.ZABBIX_USER;
   const password = process.env.ZABBIX_PASSWORD;
@@ -61,9 +62,10 @@ bot.on(["/status"], (msg) => {
     },
     id: 1,
   };
-  
+
   // ? Realizando a requisicao
   axios.post(url, body).then((response) => {
+  console.log("Autenticado!");
     const hostid = process.env.HOSTIDS;
     const body = {
       jsonrpc: "2.0",
@@ -88,28 +90,55 @@ bot.on(["/status"], (msg) => {
     };
     // ? Realizando a requisicao
     axios.post(url, body).then((response) => {
-      //console.log(response.data.result);
-      const message =
-        "Bateria: " +
-        response.data.result[0].lastvalue +
-        "%\n" +
-        "Status: " +
-        ((response.data.result[1].lastvalue == "2")
-          ? "OK\n"
-          : "Anomalia\n") +
-            "Input: " +
-            response.data.result[2].lastvalue +
-            "v\n" +
-            "Output: " +
-            response.data.result[3].lastvalue +
-            "v\n" +
-            "TempoNaBateria: " +
-            response.data.result[4].lastvalue +
-            "s\n";
+        console.log("Dados coletados!");
+        // Processar a resposta com sucesso
+        const message = "Bateria: " + response.data.result[0].lastvalue + "%\n" +
+          "Status: " + ((response.data.result[1].lastvalue == "2") ? "OK\n" : "Anomalia\n") +
+          "Input: " + response.data.result[2].lastvalue + "v\n" +
+          "Output: " + response.data.result[3].lastvalue + "v\n" +
+          "TempoNaBateria: " + response.data.result[4].lastvalue + "s\n";
 
-      bot.sendMessage(process.env.GROUP_ID, `${message}`);
-    });
-  });
+        bot.sendMessage(process.env.GROUP_ID, `${message}`);
+        console.log("Mensagem enviada!");
+      })
+      .catch((error) => {
+        // Tratar erros aqui
+        bot.sendMessage(process.env.GROUP_ID, `Não foi possives e comunicar com o NOBREAK, tente novamente mais tade!`);
+        console.error("Ocorreu um erro na requisição:", error);
+      });
+  }).catch((error) => {
+    // Tratar erros aqui
+    bot.sendMessage(process.env.GROUP_ID, `Não foi possives e comunicar com o NOBREAK, tente novamente mais tade!`);
+    console.error("Ocorreu um erro na requisição:", error);
+  });;
+  //all the information about user will come with the msg
+});
+
+bot.on(["/laststatus"], (msg) => {
+  console.log("Mensagem de /laststatus recebida!");
+
+  const url = "https://apidev.uniplaclages.edu.br:40011/last"
+
+  // ? Realizando a requisicao
+  axios.get(url).then((response) => {
+    console.log("Dados coletados!");
+    const date = new Date(response.data.created_at)
+
+    const message = "Bateria: " + response.data.result[0].lastvalue + "%\n" +
+    "Status: " + ((response.data.lastvalue == "2") ? "OK\n" : "Anomalia\n") +
+    "Input: " + response.data.lastvalue + "v\n" +
+    "Output: " + response.data.lastvalue + "v\n" +
+    "TempoNaBateria: " + response.data.lastvalue + "s\n"+
+    "HoraColeta: " + date.toLocaleString('pt-BR', { timeZone: 'UTC' });
+
+    console.log("Enviando mensagem!");
+    bot.sendMessage(process.env.GROUP_ID, `${message}`);
+    
+  }).catch((error) => {
+    // Tratar erros aqui
+    bot.sendMessage(process.env.GROUP_ID, `Não foi possives e comunicar com a API-NOBREAK, tente novamente mais tade!`);
+    console.error("Ocorreu um erro na requisição:", error);
+  });;
   //all the information about user will come with the msg
 });
 
