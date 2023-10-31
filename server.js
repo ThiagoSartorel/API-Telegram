@@ -162,7 +162,7 @@ bot.on(["/statusat"], (msg) => {
     axios.get(url, { httpsAgent: agent })
       .then((response) => {
         console.log("Dados coletados!");
-        const header = "Entre as " + parseInt(hour) + " e " + (parseInt(hour) + 1) + "horas de " + date + "\n"
+        const header = "Entre as " + parseInt(hour) + " e " + (parseInt(hour) + 1) + " horas de " + date + "\n"
         var messageComplet = ""
         const dados = response.data
 
