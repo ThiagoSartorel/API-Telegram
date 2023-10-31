@@ -5,7 +5,7 @@ const axios = require("axios");
 const https = require('https');
 require("dotenv").config();
 
-const agent = new https.Agent({  
+const agent = new https.Agent({
   rejectUnauthorized: false
 });
 
@@ -70,7 +70,7 @@ bot.on(["/status"], (msg) => {
 
   // ? Realizando a requisicao
   axios.post(url, body).then((response) => {
-  console.log("Autenticado!");
+    console.log("Autenticado!");
     const hostid = process.env.HOSTIDS;
     const body = {
       jsonrpc: "2.0",
@@ -95,18 +95,18 @@ bot.on(["/status"], (msg) => {
     };
     // ? Realizando a requisicao
     axios.post(url, body).then((response) => {
-        console.log("Dados coletados!");
-        // Processar a resposta com sucesso
-        const message = "Bateria: " + response.data.result[0].lastvalue + "%\n" +
-          "Status: " + ((response.data.result[1].lastvalue == "2") ? "OK\n" : "Anomalia\n") +
-          "Input: " + response.data.result[2].lastvalue + "v\n" +
-          "Output: " + response.data.result[3].lastvalue + "v\n" +
-          "TempoNaBateria: " + response.data.result[4].lastvalue + "s\n";
+      console.log("Dados coletados!");
+      // Processar a resposta com sucesso
+      const message = "Bateria: " + response.data.result[0].lastvalue + "%\n" +
+        "Status: " + ((response.data.result[1].lastvalue == "2") ? "OK\n" : "Anomalia\n") +
+        "Input: " + response.data.result[2].lastvalue + "v\n" +
+        "Output: " + response.data.result[3].lastvalue + "v\n" +
+        "TempoNaBateria: " + response.data.result[4].lastvalue + "s\n";
 
-        console.log("Enviando mensagem!");
-        bot.sendMessage(process.env.GROUP_ID, `${message}`);
-        console.log("Mensagem enviada!");
-      })
+      console.log("Enviando mensagem!");
+      bot.sendMessage(process.env.GROUP_ID, `${message}`);
+      console.log("Mensagem enviada!");
+    })
       .catch((error) => {
         // Tratar erros aqui
         bot.sendMessage(process.env.GROUP_ID, `NÃ£o foi possives e comunicar com o NOBREAK, tente novamente mais tade!`);
@@ -123,10 +123,9 @@ bot.on(["/status"], (msg) => {
 bot.on(["/laststatus"], (msg) => {
   console.log("Mensagem de /laststatus recebida!");
 
-  const url = process.env.NOBREAK_API_URL;
-  console.log(process.env.NOBREAK_API_URL);
+  const url = process.env.NOBREAK_API_URL + "last";
 
-  // Realizando a requisição
+  // Realizando a requisiï¿½ï¿½o
   axios.get(url, { httpsAgent: agent })
     .then((response) => {
       console.log("Dados coletados!");
@@ -145,10 +144,54 @@ bot.on(["/laststatus"], (msg) => {
     })
     .catch((error) => {
       // Tratar erros aqui
-      bot.sendMessage(process.env.GROUP_ID, "Não foi possível se comunicar com a API-NOBREAK, tente novamente mais tarde!");
-      console.error("Ocorreu um erro na requisição:", error);
+      bot.sendMessage(process.env.GROUP_ID, "NÃ£o foi possÃ­vel se comunicar com a API-NOBREAK, tente novamente mais tarde!");
+      console.error("Ocorreu um erro na requisiÃ§Ã£o:", error);
     });
-  // Todas as informações sobre o usuário virão com o msg
+  // Todas as informaï¿½ï¿½es sobre o usuï¿½rio virï¿½o com o msg
+});
+
+bot.on(["/statusat"], (msg) => {
+  console.log("Mensagem de /statusat recebida!");
+  const request = msg.text.split("/statusat")[1].replace(" ", "")
+  const date = request.split("-")[0]
+  const hour = request.split("-")[1]
+
+  if (date && hour) {
+    const url = process.env.NOBREAK_API_URL + "all";
+
+    axios.get(url, { httpsAgent: agent })
+      .then((response) => {
+        console.log("Dados coletados!");
+        const header = "Entre as " + parseInt(hour) + " e " + (parseInt(hour) + 1) + " de " + date + "\n"
+        var messageComplet = ""
+        const dados = response.data
+
+        dados.map((dado) => {
+          const dadoData = dado.created_at
+          if (dadoData.split("T")[0].replaceAll("-", "/") == date && dadoData.split("T")[1].split(":")[0] == hour) {
+            const dadoHour = new Date(dado.created_at);
+            dadoHour.setHours(dadoHour.getHours() - 3)
+            messageComplet = messageComplet + "Hora: " + dadoHour.toLocaleString('pt-BR', { timeZone: 'UTC' }) + " - " + "Bateria: " + dado.battery + "% " +
+              "Input: " + dado.input_voltage + "v\n"
+          }
+        })
+        console.log("Enviando mensagem!");
+        if(messageComplet == ""){
+          bot.sendMessage(process.env.GROUP_ID, `NÃ£o foi encontrado nenhum registro com essa data, verifique se digitou a data corretamente. yyyy/mm/dd-hh. \nex: 2023/10/31-08`);
+        }else{
+          bot.sendMessage(process.env.GROUP_ID, `${header + messageComplet}`);
+        }
+        console.log("Mensagem enviada!");
+      }).catch((error) => {
+        // Tratar erros aqui
+        bot.sendMessage(process.env.GROUP_ID, "NÃ£o foi possÃ­vel se comunicar com a API-NOBREAK, tente novamente mais tarde!");
+        console.error("Ocorreu um erro na requisiÃ§Ã£o:", error);
+      });
+
+  } else {
+    bot.sendMessage(process.env.GROUP_ID, "Formato invÃ¡lido, Digite /statusat {horÃ¡rio}. O horÃ¡rio deve ser nesse formato yyyy/mm/dd-hh. \nex: 2023/10/31-08");
+  }
+  // Todas as informaï¿½ï¿½es sobre o usuï¿½rio virï¿½o com o msg
 });
 
 // Start polling
