@@ -176,9 +176,9 @@ bot.on(["/statusat"], (msg) => {
           }
         })
         console.log("Enviando mensagem!");
-        if(messageComplet == ""){
+        if (messageComplet == "") {
           bot.sendMessage(process.env.GROUP_ID, `Não foi encontrado nenhum registro com essa data, verifique se digitou a data corretamente. yyyy/mm/dd-hh. \nex: 2023/10/31-08`);
-        }else{
+        } else {
           bot.sendMessage(process.env.GROUP_ID, `${header + messageComplet}`);
         }
         console.log("Mensagem enviada!");
@@ -189,8 +189,22 @@ bot.on(["/statusat"], (msg) => {
       });
 
   } else {
-    bot.sendMessage(process.env.GROUP_ID, "Formato inválido, Digite /statusat {horário}. O horário deve ser nesse formato yyyy/mm/dd-hh. \nex: 2023/10/31-08");
+    bot.sendMessage(process.env.GROUP_ID, "Formato inválido, Digite /statusat {data}. O horário deve ser nesse formato yyyy/mm/dd-hh. \nex: 2023/10/31-08");
   }
+  // Todas as informa��es sobre o usu�rio vir�o com o msg
+});
+
+bot.on(["/help"], (msg) => {
+  console.log("Mensagem de /help recebida!");
+
+  const message = "Comandos aceitos:\n" +
+    "/help -> Lista de comandos\n"+
+    "/status -> Obtem os dados em tempo real\n"+
+    "/laststatus -> Obtem os últimos dados cadastrados\n"+
+    "/statusat {yyyy/mm/dd-hh} -> Obtem todos os dados da data informada"
+    
+    bot.sendMessage(process.env.GROUP_ID, message);
+
   // Todas as informa��es sobre o usu�rio vir�o com o msg
 });
 
